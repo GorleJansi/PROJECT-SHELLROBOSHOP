@@ -1,14 +1,17 @@
-folder=/var/log/monodb-log
-mkdir -p $folder
-filename=$(echo $0|cut -d "." -f 1)
-logfile=$folder/$filname.log
-touch $logfile
+#! /bin/bash
 
 user=$(id -u)
 if [ $user -ne 0 ]; then
     echo "ERROR:login with root." | tee -a "$logfile"
     exit 1
 fi
+
+folder=/var/log/monodb-log
+mkdir -p $folder
+filename=$(echo $0|cut -d "." -f 1)
+logfile=$folder/$filname.log
+touch $logfile
+
 
 validate()
 {
