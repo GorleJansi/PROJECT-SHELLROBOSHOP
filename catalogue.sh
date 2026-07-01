@@ -21,9 +21,9 @@ validate(){
 
 dnf module disable nodejs -y &>> "$logfile"
 validate $? "disabling nodejs version"
-dnf module enable nodejs -y &>> "$logfile"
+dnf module enable nodejs:20 -y &>> "$logfile"
 validate $? "enabling nodejs version"
-dnf install nodejs:20 -y &>> "$logfile"
+dnf install nodejs -y &>> "$logfile"
 validate $? "install specific nodejs version"
 useradd --system --home /app --shell /bin/bash roboshop &>> "$logfile"
 validate $? "creating system user"
