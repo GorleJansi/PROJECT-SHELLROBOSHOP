@@ -1,6 +1,6 @@
 #! /bin/bash
 user=$(id -u)
-if [ $? -ne 0 ]; then
+if [ $user -ne 0 ]; then
     echo "ERROR:Run as root"|tee -a "$logfile"
     exit 1
 fi
