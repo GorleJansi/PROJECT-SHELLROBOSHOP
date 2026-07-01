@@ -1,7 +1,7 @@
 #! /bin/bash
 user=$(id -u)
 if [ $user -ne 0 ]; then
-    echo "ERROR:Run as root"|tee -a "$logfile"
+    echo "ERROR:Run as root"
     exit 1
 fi
 
@@ -9,7 +9,7 @@ folder=/var/log/catalogue-logs
 mkdir -p $folder
 filename=$(echo $0|cut -d "." -f 1)
 logfile=$folder/$filename.log
-touch logfile
+touch $logfile
 
 validate(){
     if [ $1 -ne 0 ]; then
@@ -27,7 +27,9 @@ dnf install nodejs -y &>> "$logfile"
 validate $? "install specific nodejs version"
 useradd --system --home /app --shell /bin/bash roboshop &>> "$logfile"
 validate $? "creating system user"
-mkdir /app &>> "$logfile"
+cp catalogue.service /etc/systemd/system/catalogue.service &>> "$logfile"
+validate $? "custom app so coping service file"
+mkdir -p /app &>> "$logfile"
 validate $? "creating application directory"
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>> "$logfile"
 validate $? "downloading artifact"
@@ -37,15 +39,13 @@ unzip /tmp/catalogue.zip &>> "$logfile"
 validate $? "unzip app code from temp directory"
 npm install &>> "$logfile"
 validate $? "install dependencies"
-cp catalogue.service /etc/systemd/system/catalogue.service &>> "$logfile"
-validate $? "custom app so coping service file"
 systemctl daemon-reload &>> "$logfile"
 validate $? "daemon realod after updating service file"
 systemctl start catalogue &>> "$logfile"
 validate $? "start service"
 systemctl enable catalogue &>> "$logfile"
 validate $? "enable service at boot"
-cp monogo.repo /etc/yum.repos.d &>> "$logfile"
+cp mongo.repo /etc/yum.repos.d &>> "$logfile"
 validate $? "copy mongo repo to download mongoclient"
 dnf install mongodb-mongosh -y &>> "$logfile"
 validate $? "download mongo client"
