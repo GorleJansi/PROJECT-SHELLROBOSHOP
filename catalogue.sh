@@ -4,7 +4,7 @@ mkdir -p "$folder"
 filename=$(basename "$0" .sh)
 logfile=$folder/$filename.log
 touch "$logfile"
-script_dir=$(cd "$(dirname "$0")" && pwd)
+script_dir=$PWD
 
 user=$(id -u)
 if [ $user -ne 0 ]; then
