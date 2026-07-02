@@ -1,59 +1,52 @@
 #!/bin/bash
 
+USERID=$(id -u)
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
 
-folder=/var/log/frontend-log
-mkdir -p "$folder"
-filename=$(basename "$0" .sh)
-logfile=$folder/$filename.log
-touch "$logfile"
-script_dir=$(cd "$(dirname "$0")" && pwd)
+LOGS_FOLDER="/var/log/shell-roboshop"
+SCRIPT_NAME=$( echo $0 | cut -d "." -f1 )
+SCRIPT_DIR=$PWD
+MONGODB_HOST=mongodb.daws86s.fun
+LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log" # /var/log/shell-script/16-logs.log
 
-user=$(id -u)
-if [ $user -ne 0 ]; then
-    echo "ERROR:get ROOT access"|tee -a "$logfile"
-    exit 1
+mkdir -p $LOGS_FOLDER
+echo "Script started executed at: $(date)" | tee -a $LOG_FILE
+
+if [ $USERID -ne 0 ]; then
+    echo "ERROR:: Please run this script with root privelege"
+    exit 1 # failure is other than 0
 fi
 
-validate(){
+VALIDATE(){ # functions receive inputs through args just like shell script args
     if [ $1 -ne 0 ]; then
-        echo "ERROR:$2"|tee -a "$logfile"
+        echo -e "$2 ... $R FAILURE $N" | tee -a $LOG_FILE
         exit 1
-    else    
-        echo "SUCCESS:$2"|tee -a "$logfile"
+    else
+        echo -e "$2 ... $G SUCCESS $N" | tee -a $LOG_FILE
     fi
 }
 
+dnf module disable nginx -y &>>$LOG_FILE
+dnf module enable nginx:1.24 -y &>>$LOG_FILE
+dnf install nginx -y &>>$LOG_FILE
+VALIDATE $? "Installing Nginx"
 
+systemctl enable nginx  &>>$LOG_FILE
+systemctl start nginx 
+VALIDATE $? "Starting Nginx"
 
-dnf module disable nginx -y >> "$logfile" 2>&1
-validate $? "disabling nginx"
+rm -rf /usr/share/nginx/html/* 
+curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip &>>$LOG_FILE
+cd /usr/share/nginx/html 
+unzip /tmp/frontend.zip &>>$LOG_FILE
+VALIDATE $? "Downloading frontend"
 
-dnf module enable nginx:1.24 -y >> "$logfile" 2>&1
-validate $? "enabling nginx"
+rm -rf /etc/nginx/nginx.conf
+cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf
+VALIDATE $? "Copying nginx.conf"
 
-dnf install nginx unzip -y >> "$logfile" 2>&1
-validate $? "install nginx and unzip"
-
-systemctl enable nginx >> "$logfile" 2>&1
-validate $? "enabling nginx service"
-
-systemctl start nginx >> "$logfile" 2>&1
-validate $? "starting nginx service"
-
-rm -rf /usr/share/nginx/html/* >> "$logfile" 2>&1
-validate $? "removing default  nginx html pages"
-
-curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip >> "$logfile" 2>&1
-validate $? "downloading app code"
-
-cd /usr/share/nginx/html >> "$logfile" 2>&1
-validate $? "change to nginx html directory"
-
-unzip -o /tmp/frontend.zip >> "$logfile" 2>&1
-validate $? "unzip app code in nginx default page "
-
-cp "$script_dir/frontend.conf" /etc/nginx/nginx.conf >> "$logfile" 2>&1
-validate $? "adding reverse proxy in nginx conf "
-
-systemctl restart nginx >> "$logfile" 2>&1
-validate $? "restarting nginx service"
+systemctl restart nginx 
+VALIDATE $? "Restarting Nginx"
