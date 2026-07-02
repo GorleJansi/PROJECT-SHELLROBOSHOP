@@ -5,7 +5,7 @@ mkdir -p $folder
 filename=$(echo $0|cut -d "." -f 1)
 logfile=$folder/$filename.log
 touch $logfile
-
+$Script_dir=$PWD
 
 user=$(id -u)
 if [ $user -ne 0 ]; then
