@@ -1,6 +1,5 @@
 #! bin/bash
 
-
 folder=/var/log/cart-logs
 mkdir -p $folder
 filename=$(echo $0|cut -d "." -f 1)
@@ -38,6 +37,8 @@ if [ $? -ne 0 ]; then
     validate $? "system user created"
 else
     validate 0 "system user already exists ...."    
+fi
+
 
 mkdir -p /app &>> "$logfile"
 validate $? "move to /app directory"
@@ -65,5 +66,3 @@ validate $? "enable cart service"
 
 systemctl start cart &>> "$logfile"
 validate $? "start cart service"
-
-
