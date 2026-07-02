@@ -1,12 +1,12 @@
-#! /bin/bash
+#!/bin/bash
 
 
 folder=/var/log/frontend-log
-mkdir -p $folder
-filename=$(echo $0|cut -d "." -f 1)
+mkdir -p "$folder"
+filename=$(basename "$0" .sh)
 logfile=$folder/$filename.log
-touch $logfile
-script_dir=$PWD
+touch "$logfile"
+script_dir=$(cd "$(dirname "$0")" && pwd)
 
 user=$(id -u)
 if [ $user -ne 0 ]; then
@@ -25,34 +25,35 @@ validate(){
 
 
 
-dnf module disable nginx -y &>> "$logfile"
+dnf module disable nginx -y >> "$logfile" 2>&1
 validate $? "disabling nginx"
 
-dnf module enable nginx:1.24 -y &>> "$logfile"
+dnf module enable nginx:1.24 -y >> "$logfile" 2>&1
 validate $? "enabling nginx"
 
-dnf install nginx -y &>> "$logfile"
-validate $? "install nginx"
+dnf install nginx unzip -y >> "$logfile" 2>&1
+validate $? "install nginx and unzip"
 
-systemctl enable nginx  &>> "$logfile"
+systemctl enable nginx >> "$logfile" 2>&1
 validate $? "enabling nginx service"
 
-systemctl start nginx  &>> "$logfile"
+systemctl start nginx >> "$logfile" 2>&1
 validate $? "starting nginx service"
 
-rm -rf /usr/share/nginx/html/* &>> "$logfile"
+rm -rf /usr/share/nginx/html/* >> "$logfile" 2>&1
 validate $? "removing default  nginx html pages"
 
-curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip &>> "$logfile"
+curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip >> "$logfile" 2>&1
 validate $? "downloading app code"
 
-cd /usr/share/nginx/html &>> "$logfile"
+cd /usr/share/nginx/html >> "$logfile" 2>&1
+validate $? "change to nginx html directory"
 
-unzip -o unzip /tmp/frontend.zip &>> "$logfile"
+unzip -o /tmp/frontend.zip >> "$logfile" 2>&1
 validate $? "unzip app code in nginx default page "
 
-cp $script_dir/frontend.conf /etc/nginx/nginx.conf &>> "$logfile"
+cp "$script_dir/frontend.conf" /etc/nginx/nginx.conf >> "$logfile" 2>&1
 validate $? "adding reverse proxy in nginx conf "
 
-systemctl restart nginx  &>> "$logfile"
+systemctl restart nginx >> "$logfile" 2>&1
 validate $? "restarting nginx service"
