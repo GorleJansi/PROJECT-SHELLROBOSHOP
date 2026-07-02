@@ -2,12 +2,16 @@
 
 set -euo pipefail
 trap 'echo "Scripts failed at line: $LINENO and command executed is : $BASH_COMMAND" ' ERR
+
 folder=/var/log/rabbitmq-logs
-mkdir -p $folder
+mkdir -p $folder >> "$logfile" 2>&1
+
 filename=$(echo $0 |cut -d "." -f 1)
 logfile=$folder/$filename.log
-touch $logfile
+touch $logfile >> "$logfile" 2>&1
+
 Script_dir=$PWD
+
 user=$(id -u)
 if [ $user -ne 0 ]; then
     echo " ERROR:run as root "|tee -a "$logfile"
