@@ -48,7 +48,7 @@ validate $? "downloading app code"
 
 cd /usr/share/nginx/html &>> "$logfile"
 
-unzip -o /usr/share/nginx/html/ &>> "$logfile"
+unzip -o unzip /tmp/frontend.zip &>> "$logfile"
 validate $? "unzip app code in nginx default page "
 
 cp $script_dir/frontend.conf /etc/nginx/nginx.conf &>> "$logfile"
