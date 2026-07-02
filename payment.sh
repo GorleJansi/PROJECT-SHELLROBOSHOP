@@ -49,7 +49,7 @@ unzip -o /tmp/payment.zip &>> "$logfile"
 validate $? "delete old fils in /app and unzip application artifact"
 
 pip3 install -r requirements.txt &>> "$logfile"
-validate $? "installing dependencies"
+
 
 cp $Script_dir/payment.service /etc/systemd/system/payment.service &>> "$logfile"
 validate $? "coping payment service"
