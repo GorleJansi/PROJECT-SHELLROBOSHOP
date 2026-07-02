@@ -1,7 +1,7 @@
 #! /bin/bash
 
-set -euo pipelinefail
-trap 'echo "Scripts failed at line: $LINENUM and command executed is : $BASH_COMMAND" ' ERR
+set -euo pipefail
+trap 'echo "Scripts failed at line: $LINENO and command executed is : $BASH_COMMAND" ' ERR
 folder=/var/log/rabbitmq-logs
 filename=$(echo $0 |cut -d "." -f 1)
 logfile=$folder/$filename.log
