@@ -4,11 +4,11 @@ set -euo pipefail
 trap 'echo "Scripts failed at line: $LINENO and command executed is : $BASH_COMMAND" ' ERR
 
 folder=/var/log/rabbitmq-logs
-mkdir -p $folder >> "$logfile" 2>&1
+mkdir -p $folder 
 
 filename=$(echo $0 |cut -d "." -f 1)
 logfile=$folder/$filename.log
-touch $logfile >> "$logfile" 2>&1
+touch $logfile 
 
 Script_dir=$PWD
 
