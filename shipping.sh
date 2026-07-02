@@ -1,81 +1,74 @@
-#! bin/bash
+#!/bin/bash
 
-folder=/var/log/shipping-logs
-mkdir -p $folder
-filename=$(echo $0|cut -d "." -f 1)
-logfile=$folder/$filename.log
-touch $logfile
+USERID=$(id -u)
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+
+LOGS_FOLDER="/var/log/shell-roboshop"
+SCRIPT_NAME=$( echo $0 | cut -d "." -f1 )
+SCRIPT_DIR=$PWD
+MONGODB_HOST=mongodb.daws86s.fun
+LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log" # /var/log/shell-script/16-logs.log
 
 
-user=$(id -u)
-if [ $user -ne 0 ]; then
-    echo "ERROR:Run as ROOT" | tee -a "$logfile"
-    exit 1
+mkdir -p $LOGS_FOLDER
+echo "Script started executed at: $(date)" | tee -a $LOG_FILE
+
+if [ $USERID -ne 0 ]; then
+    echo "ERROR:: Please run this script with root privelege"
+    exit 1 # failure is other than 0
 fi
 
-validate(){
+VALIDATE(){ # functions receive inputs through args just like shell script args
     if [ $1 -ne 0 ]; then
-        echo "ERROR:$2" | tee -a "$logfile"
+        echo -e "$2 ... $R FAILURE $N" | tee -a $LOG_FILE
         exit 1
     else
-        echo "SUCCESS:$2" | tee -a "$logfile"
-    fi       
+        echo -e "$2 ... $G SUCCESS $N" | tee -a $LOG_FILE
+    fi
 }
 
+dnf install maven -y &>>$LOG_FILE
 
-
-dnf install maven -y &>> "$logfile"
-validate $? "installing maven"
-
-id roboshop &>> "$logfile"
+id roboshop &>>$LOG_FILE
 if [ $? -ne 0 ]; then
-    useradd --system --home /app --shell /sbin/nologin roboshop
-    validate $? "system user created"
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+    VALIDATE $? "Creating system user"
 else
-    validate 0 "system user already exists ...."    
+    echo -e "User already exist ... $Y SKIPPING $N"
 fi
 
+mkdir -p /app
+VALIDATE $? "Creating app directory"
 
+curl -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip &>>$LOG_FILE
+VALIDATE $? "Downloading shipping application"
 
-curl -L -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip  &>> "$logfile"
-validate $? "downloading application artifact"
+cd /app 
+VALIDATE $? "Changing to app directory"
 
-mkdir -p /app &>> "$logfile"
-validate $? "move to /app directory"
+rm -rf /app/*
+VALIDATE $? "Removing existing code"
 
-cd /app &>> "$logfile"
-validate $? "change to /app directory"
+unzip /tmp/shipping.zip &>>$LOG_FILE
+VALIDATE $? "unzip shipping"
 
-unzip -o /tmp/shipping.zip &>> "$logfile"
-validate $? "delete old fils in /app and unzip application artifact"
-
-mvn clean package l &>> "$logfile"
-validate $? "installing dependencies and build jar "
-
+mvn clean package  &>>$LOG_FILE
 mv target/shipping-1.0.jar shipping.jar 
-validate $? "rename jar file"
 
-
-cp $Script_dir/shipping.service /etc/systemd/system/shipping.service &>> "$logfile"
-validate $? "coping shipping service"
-
-systemctl daemon-reload &>> "$logfile"
-validate $? "reload service configurations"
-
-systemctl enable shipping &>> "$logfile"
-validate $? "enable shipping service"
-
-systemctl start shipping &>> "$logfile"
-validate $? "start shipping service"
-
+cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
+systemctl daemon-reload
+systemctl enable shipping  &>>$LOG_FILE
 
 dnf install mysql -y  &>>$LOG_FILE
 
 mysql -h 100.58.156.112 -uroot -pRoboShop@1 -e 'use cities' &>>$LOG_FILE
 if [ $? -ne 0 ]; then
-    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/schema.sql &>>$LOG_FILE
-    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/app-user.sql  &>>$LOG_FILE
-    mysql -h $MYSQL_HOST -uroot -pRoboShop@1 < /app/db/master-data.sql &>>$LOG_FILE
+    mysql -h 100.58.156.112 -uroot -pRoboShop@1 < /app/db/schema.sql &>>$LOG_FILE
+    mysql -h 100.58.156.112 -uroot -pRoboShop@1 < /app/db/app-user.sql  &>>$LOG_FILE
+    mysql -h 100.58.156.112 -uroot -pRoboShop@1 < /app/db/master-data.sql &>>$LOG_FILE
 else
     echo -e "Shipping data is already loaded ... $Y SKIPPING $N"
 fi
