@@ -4,7 +4,7 @@
 folder=/var/log/frontend-log
 mkdir -p $folder
 filename=$(echo $0|cut -d "." -f 1)
-logfile=$folder/$filename.log\
+logfile=$folder/$filename.log
 touch $logfile
 script_dir=$PWD
 
